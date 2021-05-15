@@ -1,5 +1,7 @@
 module rendahl
 
-# Write your package code here.
+include("solver.jl")
+
+export solve, draw_irf
 
 end
