@@ -1,4 +1,4 @@
-# Rendahl Solver
+# A DSGE Solver using Rendahl (2017)
 
 
 The package uses the [Rendahl (2017)](https://www.ihs.ac.at/publications/eco/es-330.pdf) method for solving DSGE models, although the method can be easily applied to solving other models like heterogenous agent models ala Aiyagari.
