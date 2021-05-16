@@ -4,7 +4,8 @@ using ForwardDiff
 using LinearAlgebra
 using Plots
 
-mutable struct solution
+struct solution
+    resultmessage::String
     F::Matrix{Float64}
     Q::Matrix{Float64} 
     irf::Matrix{Float64} 
@@ -92,16 +93,18 @@ function solve_system(A, B, C, E, maxiter=1000, tol=1e-6)
     Q = -(C * F0 + B) \ E
     
     if iter == maxiter
-        println("Convergence Failed. Max Iterations Reached. Error: $error")
+        outmessage = "Convergence Failed. Max Iterations Reached. Error: $error"
     elseif maximum(abs.(XP.values)) > 1.0
-        println("Non existence")
+        outmessage = "Non existence"
     elseif maximum(abs.(XS.values)) > 1.0
-        println("No stable equilibrium")
+        outmessage = "No stable equilibrium"
     else
-        println("Convergence Successful!")
+        outmessage = "Convergence Successful!"
     end
     
-    return F0, Q
+    println(outmessage)
+
+    return F0, Q, outmessage
 
     
 end
@@ -147,10 +150,10 @@ function solve(F, fargs; xinit, irf_timeperiods)
 
     xss = get_ss(F, xinit, fargs)
     A, B, C, E = rendahl_coeffs(F, xss, fargs)
-    F, Q = solve_system(A, B, C, E)
+    F, Q, outmessage = solve_system(A, B, C, E)
     irf = compute_irfs(F, Q, xss, irf_timeperiods)
 
-    out = solution(F, Q, irf, xss, A, B, C, E)
+    out = solution(outmessage, F, Q, irf, xss, A, B, C, E)
 
     return out
     
