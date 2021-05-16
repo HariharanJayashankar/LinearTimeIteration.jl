@@ -1,4 +1,4 @@
-# Rendahl Solver
+# A DSGE Solver using Rendahl (2017)
 
 
 The package uses the [Rendahl (2017)](https://www.ihs.ac.at/publications/eco/es-330.pdf) method for solving DSGE models, although the method can be easily applied to solving other models like heterogenous agent models ala Aiyagari.
@@ -79,6 +79,6 @@ draw_irf(sol.irf, sol.xss, ["Consumption", "Interest Rate", "Capital", "Output",
 
 The output will look like this:
 
-![]("src/rbc_irf.png")
+![RBC IRF](https://user-images.githubusercontent.com/32820850/118377767-f8710d80-b5ec-11eb-9b54-4d96ba17f65b.png)
 
 
