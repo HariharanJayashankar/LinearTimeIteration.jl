@@ -3,7 +3,7 @@
 
 The package uses the [Rendahl (2017)](https://www.ihs.ac.at/publications/eco/es-330.pdf) method for solving DSGE models, although the method can be easily applied to solving other models like heterogenous agent models ala Aiyagari.
 
-Package was built because it seemed like there was no quick and dirty way of playing around with big macro models.
+Package was built because it seemed like there was no quick way of playing around with big macro models.
 
 Using the package is simple. All you need to do is define a function `F(Xl, X, Xf, ϵ, args)` which outputs the residuals of the equiblibrium equations of the model. `Xf` are supposed to be the one period forward variables, `X` the current variables, and `Xl` the lagged variables. `ϵ` should contain all the shocks of the model. `args` are optional arguments you may want to pass in like parameters the model needs.
 
@@ -80,5 +80,11 @@ draw_irf(sol.irf, sol.xss, ["Consumption", "Interest Rate", "Capital", "Output",
 The output will look like this:
 
 ![RBC IRF](https://user-images.githubusercontent.com/32820850/118377767-f8710d80-b5ec-11eb-9b54-4d96ba17f65b.png)
+
+# TODO
+
+* Add tests
+* Make the shock handling more elegant
+* Add way to add your own steady state values if internal one fails
 
 
