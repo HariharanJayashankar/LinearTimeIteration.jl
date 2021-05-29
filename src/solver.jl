@@ -18,11 +18,11 @@ struct solution
 end
 
 
-function get_ss(F, xss_init, fargs)
+function get_ss(equations, xss_init, fargs)
     
 
     function ss_residual!(xss_init)
-        xss_init = F(xss_init, xss_init, xss_init, fargs...)
+        xss_init = equations(xss_init, xss_init, xss_init, fargs...)
     end
 
     solver_result = nlsolve(ss_residual!, xss_init)
@@ -32,15 +32,15 @@ function get_ss(F, xss_init, fargs)
 end
 
 
-function ss_residual!(xss_init)
-    xss_init = F(xss_init, xss_init, xss_init, [0.0], params)
+function ss_residual!(equations, xss_init)
+    xss_init = equations(xss_init, xss_init, xss_init, [0.0], params)
 end
 
-function get_ss(F, xss_init, fargs)
+function get_ss(equations, xss_init, fargs)
     
 
     function ss_residual!(xss_init)
-        xss_init = F(xss_init, xss_init, xss_init, [0.0], fargs...)
+        xss_init = equations(xss_init, xss_init, xss_init, [0.0], fargs...)
     end
 
     solver_result = nlsolve(ss_residual!, xss_init)
@@ -50,19 +50,18 @@ function get_ss(F, xss_init, fargs)
 end
 
 
-function rendahl_coeffs(F, xss, fargs)
+function rendahl_coeffs(equations, xss, fargs)
 
-    A = ForwardDiff.jacobian(t -> F(t, xss, xss, 0.0, fargs...), xss)
-    B = ForwardDiff.jacobian(t -> F(xss, t, xss, 0.0, fargs...), xss)
-    C = ForwardDiff.jacobian(t -> F(xss, xss, t, 0.0, fargs...), xss)
-    E = ForwardDiff.jacobian(t -> F(xss, xss, xss, t, fargs...), [0.0])
+    A = ForwardDiff.jacobian(t -> equations(t, xss, xss, 0.0, fargs...), xss)
+    B = ForwardDiff.jacobian(t -> equations(xss, t, xss, 0.0, fargs...), xss)
+    C = ForwardDiff.jacobian(t -> equations(xss, xss, t, 0.0, fargs...), xss)
 
-    return A, B, C, E
+    return A, B, C
 
 end
 
 
-function solve_system(A, B, C, E, maxiter=1000, tol=1e-6)
+function solve_system(A, B, C, maxiter=1000, tol=1e-6)
     
     #==
     Solves for P and Q using Rehndal's Algorithm
@@ -90,8 +89,6 @@ function solve_system(A, B, C, E, maxiter=1000, tol=1e-6)
     XP = LinearAlgebra.eigen(F0)
     XS = LinearAlgebra.eigen(S0)
     
-    Q = -(C * F0 + B) \ E
-    
     if iter == maxiter
         outmessage = "Convergence Failed. Max Iterations Reached. Error: $error"
     elseif maximum(abs.(XP.values)) > 1.0
@@ -104,13 +101,17 @@ function solve_system(A, B, C, E, maxiter=1000, tol=1e-6)
     
     println(outmessage)
 
-    return F0, Q, outmessage
+    return F0, A, B, C, outmessage
 
     
 end
 
 
-function compute_irfs(F, Q, xss, timeperiods = 40)
+function compute_irfs(equations, F, B, C, shocks, xss, fargs, timeperiods = 40)
+
+    shocks_ss = [zero(shocks)]
+    E = ForwardDiff.jacobian(t -> equations(xss, xss, xss, shocks * t, fargs...), shocks_ss)
+    Q = -(C * F + B) \ E
 
     IRF = zeros(size(F, 1), timeperiods)
 
@@ -121,7 +122,7 @@ function compute_irfs(F, Q, xss, timeperiods = 40)
 
     IRF = IRF .+ xss
 
-    return IRF
+    return IRF, Q, E
 
 end
 
@@ -145,13 +146,13 @@ function draw_irf(irf, xss, varnames)
 end
 
 
-function solve(F, fargs; xinit, irf_timeperiods)
+function solve(equations, fargs, shocks; xinit, irf_timeperiods)
 
 
-    xss = get_ss(F, xinit, fargs)
-    A, B, C, E = rendahl_coeffs(F, xss, fargs)
-    F, Q, outmessage = solve_system(A, B, C, E)
-    irf = compute_irfs(F, Q, xss, irf_timeperiods)
+    xss = get_ss(equations, xinit, fargs)
+    A, B, C = rendahl_coeffs(equations, xss, fargs)
+    F, A, B, C, outmessage = solve_system(A, B, C)
+    irf, Q, E = compute_irfs(equations, F, B, C, shocks, xss, fargs, irf_timeperiods)
 
     out = solution(outmessage, F, Q, irf, xss, A, B, C, E)
 
