@@ -5,7 +5,7 @@ The package uses the [Rendahl (2017)](https://www.ihs.ac.at/publications/eco/es-
 
 Package was built because it seemed like there was no quick and dirty way of playing around with big macro models.
 
-Using the package is simple. All you need to do is define a function `F(Xl, X, Xf, ϵ, args)` which outputs the residuals of the equiblibrium equations of the model. `Xf` are supposed to be the one period forward variables, `X` the current variables, and `Xl` the lagged variables. `ϵ` should contain all the shocks of the model. `args` are optional arguments you may want to pass in like parameters the model needs.
+Using the package is simple. All you need to do is define a function `equation(Xl, X, Xf, ϵ, args)` which outputs the residuals of the equiblibrium equations of the model. `Xf` are supposed to be the one period forward variables, `X` the current variables, and `Xl` the lagged variables. `ϵ` should contain all the shocks of the model. `args` are optional arguments you may want to pass in like parameters the model needs.
 
 
 # An Example - A simple RBC Model
@@ -14,7 +14,7 @@ Using the package is simple. All you need to do is define a function `F(Xl, X, X
 For example the `F` function for an RBC model might look like:
 
 ```julia
-function F(Xl, X, Xf, ϵ, params)
+function equations(Xl, X, Xf, ϵ, params)
     #====================
     Xf = X_{t+1}
     X = X_t
@@ -25,7 +25,7 @@ function F(Xl, X, Xf, ϵ, params)
     C, R, K, Y, Z = X
     Cl, Rl, Kl, Yl, Zl = Xl
     
-    @unpack β, α, γ, δ, ρ, σz = params
+    @unpack β, α, γ, δ, ρ = params
     
     ϵ = ϵ[1]
     
@@ -34,7 +34,7 @@ function F(Xl, X, Xf, ϵ, params)
                 R - α*Z*Kl^(α-1) - 1 + δ;
                 K - (1-δ)*Kl - Y + C;
                 Y - Z*Kl^α;
-                log(Z) - ρ*log(Zl) - σz*ϵ]
+                log(Z) - ρ*log(Zl) - ϵ]
     
     return residual
     
@@ -51,8 +51,7 @@ rbc = @with_kw (
     α = 0.33,
     γ = 2.0,
     δ = 0.1,
-    ρ = 0.9,
-    σz = 0.8 # shock for epsilon
+    ρ = 0.9
 )
 
 params = rbc()
@@ -65,7 +64,9 @@ But how you wish to put in the parameters is totally up to you!
 Solving the model is straightforward. We use the `solve` function to get out a `Solution` object with the fields `(P, Q, irf, :xss, A, B, C, E)`. 
 
 ```julia
-sol = solve(F, [params], 
+shocks = 0.8
+sol = solve(equations, [params],
+            shocks, 
             xinit = ones(5), 
             irf_timeperiods = 40)
 ```
