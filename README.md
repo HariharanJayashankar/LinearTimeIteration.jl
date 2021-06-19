@@ -11,7 +11,7 @@ add https://github.com/HariharanJayashankar/Rendahl.jl
 
 Package was built because it seemed like there was no quick way of playing around with big macro models.
 
-Using the package is simple. All you need to do is define a function `equation(Xl, X, Xf, ϵ, ...)` which outputs the residuals of the equiblibrium equations of the model. `Xf` are supposed to be the one period forward variables, `X` the current variables, and `Xl` the lagged variables. `ϵ` should contain all the shocks of the model. `args` are optional arguments you may want to pass in like parameters the model needs.
+Using the package is simple. All you need to do is define a function `equations(Xl, X, Xf, ϵ, ...)` which outputs the residuals of the equiblibrium equations of the model. `Xf` are supposed to be the one period forward variables, `X` the current variables, and `Xl` the lagged variables. `ϵ` should contain all the shocks of the model. `args` are optional arguments you may want to pass in like parameters the model needs.
 
 
 # An Example - A simple RBC Model
