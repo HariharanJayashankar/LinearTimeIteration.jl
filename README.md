@@ -3,6 +3,12 @@
 
 The package uses the [Rendahl (2017)](https://www.ihs.ac.at/publications/eco/es-330.pdf) method for solving DSGE models, although the method can be easily applied to solving other models like heterogenous agent models ala Aiyagari.
 
+To install simply open your Julia terminal, go to the package manager by inputting `]` and then copying in:
+
+```
+add https://github.com/HariharanJayashankar/Rendahl.jl
+```
+
 Package was built because it seemed like there was no quick way of playing around with big macro models.
 
 Using the package is simple. All you need to do is define a function `equation(Xl, X, Xf, ϵ, args)` which outputs the residuals of the equiblibrium equations of the model. `Xf` are supposed to be the one period forward variables, `X` the current variables, and `Xl` the lagged variables. `ϵ` should contain all the shocks of the model. `args` are optional arguments you may want to pass in like parameters the model needs.
