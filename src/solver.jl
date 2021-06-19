@@ -7,14 +7,14 @@ using Plots
 struct solution
     resultmessage::String
     F::Matrix{Float64}
-    Q::Matrix{Float64} 
-    irf::Matrix{Float64} 
+    Q::Any
+    irf::Any
     xss::Vector{Float64}
 
     A::Matrix{Float64} 
     B::Matrix{Float64}
     C::Matrix{Float64}
-    E::Matrix{Float64}
+    E::Any
 end
 
 
@@ -92,9 +92,9 @@ function solve_system(A, B, C, maxiter=1000, tol=1e-6)
     if iter == maxiter
         outmessage = "Convergence Failed. Max Iterations Reached. Error: $error"
     elseif maximum(abs.(XP.values)) > 1.0
-        outmessage = "Non existence"
+        outmessage = "No Stable Solution Exists!"
     elseif maximum(abs.(XS.values)) > 1.0
-        outmessage = "No stable equilibrium"
+        outmessage = "Multiple Solutions Exist!"
     else
         outmessage = "Convergence Successful!"
     end
@@ -146,13 +146,18 @@ function draw_irf(irf, xss, varnames)
 end
 
 
-function solve(equations, fargs, shocks; xinit, irf_timeperiods)
+function solve(equations, fargs, shocks; xinit, irf_timeperiods = 0)
 
 
     xss = get_ss(equations, xinit, fargs)
     A, B, C = rendahl_coeffs(equations, xss, fargs)
     F, A, B, C, outmessage = solve_system(A, B, C)
-    irf, Q, E = compute_irfs(equations, F, B, C, shocks, xss, fargs, irf_timeperiods)
+    
+    if irf_timeperiods > zero(irf_timeperiods)
+        irf, Q, E = compute_irfs(equations, F, B, C, shocks, xss, fargs, irf_timeperiods)
+    else
+        irf, Q, E = [missing, missing, missing]
+    end
 
     out = solution(outmessage, F, Q, irf, xss, A, B, C, E)
 
