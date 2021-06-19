@@ -1,7 +1,7 @@
 # A DSGE Solver using Rendahl (2017)
 
 
-The package uses the [Rendahl (2017)](https://www.ihs.ac.at/publications/eco/es-330.pdf) method for solving DSGE models, although the method can be easily applied to solving other models like heterogenous agent models ala Aiyagari.
+The package uses the Linear Time Iteration method from [Rendahl (2017)](https://www.ihs.ac.at/publications/eco/es-330.pdf) for solving linear rational expectation models like those typically found in DSGE models.
 
 To install simply open your Julia terminal, go to the package manager by inputting `]` and then copying in:
 
