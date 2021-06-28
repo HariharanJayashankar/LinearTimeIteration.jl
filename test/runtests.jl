@@ -2,20 +2,14 @@ using rendahl
 using Test
 using Parameters
 
-function rbc_eq(Xl, X, Xf, ϵ, params)
-    #====================
-    Xf = X_{t+1}
-    X = X_t
-    Xl = X_{t-1}
-    ϵ = ϵ_t
-    ======================#
+function rbc_eq(Xl, X, Xf, ϵ, ϵ_sd, params)
     Cf, Rf, Kf, Yf, Zf = Xf
     C, R, K, Y, Z = X
     Cl, Rl, Kl, Yl, Zl = Xl
     
     @unpack β, α, γ, δ, ρ = params
     
-    ϵ = ϵ[1]
+    ϵ = ϵ[1] * ϵ_sd[1]
     
     # RBC Equations
     residual = [1.0 - β * Rf * Cf^(-γ) * C^(γ);
@@ -60,15 +54,15 @@ function rbc_ss(params)
     return ss
 end
 
-func_ss = rendahl.get_ss(rbc_eq, ones(5), [params])
+func_ss = rendahl.get_ss(rbc_eq, ones(5), 0.8, [params])
 closedform_rbc_ss = rbc_ss(params)
 
 # Simple ODE
-function ode_eqn(Xl, X, Xf, ϵ, params)
+function ode_eqn(Xl, X, Xf, ϵ, ϵ_sd ,params)
 
     @unpack α_1, α_2, α_3 = params
 
-    residual = [ α_1 * Xl[1] + α_2 * X[1] + α_3 * Xf[1] + ϵ[1]]
+    residual = [ α_1 * Xl[1] + α_2 * X[1] + α_3 * Xf[1] + ϵ[1] * ϵ_sd[1]]
 
     return residual
 

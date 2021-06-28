@@ -11,7 +11,11 @@ add https://github.com/HariharanJayashankar/Rendahl.jl
 
 Package was built because it seemed like there was no quick way of playing around with big macro models.
 
-Using the package is simple. All you need to do is define a function `equations(Xl, X, Xf, ϵ, ...)` which outputs the residuals of the equiblibrium equations of the model. `Xf` are supposed to be the one period forward variables, `X` the current variables, and `Xl` the lagged variables. `ϵ` should contain all the shocks of the model. `args` are optional arguments you may want to pass in like parameters the model needs.
+Using the package is simple. All you need to do is define a function `equations(Xl, X, Xf, ϵ, ϵ_sd ...)` which outputs the residuals of the equiblibrium equations of the model. `Xf` are supposed to be the one period forward variables, `X` the current variables, and `Xl` the lagged variables. `ϵ` should contain all the shocks of the model.
+
+`ϵ_sd` contains the standard deviations to all the shocks. This value is a bit important as it determines what the final solution will look like.
+
+`args` are optional arguments you may want to pass in like parameters the model needs.
 
 
 # An Example - A simple RBC Model
@@ -20,20 +24,15 @@ Using the package is simple. All you need to do is define a function `equations(
 For example the `equations` function for an RBC model might look like:
 
 ```julia
-function equations(Xl, X, Xf, ϵ, params)
-    #====================
-    Xf = X_{t+1}
-    X = X_t
-    Xl = X_{t-1}
-    ϵ = ϵ_t
-    ======================#
+function equations(Xl, X, Xf, ϵ, ϵ_sd, params)
+
     Cf, Rf, Kf, Yf, Zf = Xf
     C, R, K, Y, Z = X
     Cl, Rl, Kl, Yl, Zl = Xl
     
     @unpack β, α, γ, δ, ρ = params
     
-    ϵ = ϵ[1]
+    ϵ = ϵ[1] * ϵ_sd[1]
     
     # RBC Equations
     residual = [1.0 - β * Rf * Cf^(-γ) * C^(γ);
@@ -66,21 +65,27 @@ But how you wish to pass in the parameters is totally up to you!
 
 ## Solving
 
-Solving the model is straightforward. We use the `solve` function to get out a `Solution` object with the fields `(P, Q, irf, :xss, A, B, C, E)`. 
+Solving the model is straightforward. We use the `solve` function to get out a `Solution` object with the fields `(resultmessage, F, Q, xss, equations, A, B, C, E)`. `F` and `Q` define the solution to the system. `xss` are the steady state values of the variables. `equations` stores the function which outputs the residual of the equilibrium equations. `A, B, C, E` correspond to their namesakes in the paper.
 
 ```julia
-shocks = 0.8
-sol = solve(equations, [params],
-            shocks, 
-            xinit = ones(5), 
-            irf_timeperiods = 40)
+shocks_sd = 0.8
+sol = solve(equations, [params], shocks_sd, xinit = ones(5))
 ```
 
-And that's it! If you want to plot out the irfs, `draw_irf` is a nice helper function.
+`sol` has everything we need to understand our model.
 
+If you want to simulate some data you can use the `simdata` function provided:
 
 ```julia
-draw_irf(sol.irf, sol.xss, ["Consumption", "Interest Rate", "Capital", "Output", "Z"])
+sim = simdata(sol, 200)
+plot(sim', layout = 5, title = ["Consumption", "Interest Rate", "Capital", "Output", "Z"])
+```
+
+Similarly if you want to look at how the IRF's look:
+
+```julia
+irf = compute_irfs(sol, 100)
+plot(irf', layout = 5, title = ["Consumption", "Interest Rate", "Capital", "Output", "Z"], labels = "")
 ```
 
 The output will look like this:
