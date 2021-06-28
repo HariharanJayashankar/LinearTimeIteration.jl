@@ -3,12 +3,12 @@ using NLsolve
 using ForwardDiff
 using LinearAlgebra
 using Plots
+using QuantEcon
 
 struct solution
     resultmessage::String
     F::Matrix{Float64}
     Q::Any
-    irf::Any
     xss::Vector{Float64}
 
     A::Matrix{Float64} 
@@ -18,50 +18,37 @@ struct solution
 end
 
 
-function get_ss(equations, xss_init, fargs)
-    
+function ss_residual(x, equations, ϵ_sd, fargs)
+    resid = equations(x, x, x, zero(ϵ_sd), ϵ_sd, fargs...)
+    return resid
+end
 
-    function ss_residual!(xss_init)
-        xss_init = equations(xss_init, xss_init, xss_init, fargs...)
+
+function get_ss(equations, xss_init, ϵ_sd, fargs)
+
+    function ss_resid_nlsolve!(x)
+        x = ss_residual(x, equations, ϵ_sd, fargs)
     end
 
-    solver_result = nlsolve(ss_residual!, xss_init)
-
+    solver_result = nlsolve(ss_resid_nlsolve!, xss_init)
     return solver_result.zero
 
 end
 
 
-function ss_residual!(equations, xss_init)
-    xss_init = equations(xss_init, xss_init, xss_init, [0.0], params)
-end
-
-function get_ss(equations, xss_init, fargs)
-    
-
-    function ss_residual!(xss_init)
-        xss_init = equations(xss_init, xss_init, xss_init, [0.0], fargs...)
-    end
-
-    solver_result = nlsolve(ss_residual!, xss_init)
-
-    return solver_result.zero
-
-end
-
-
-function rendahl_coeffs(equations, xss, fargs)
+function rendahl_coeffs(equations, xss, shocks_ss, fargs)
 
     A = ForwardDiff.jacobian(t -> equations(t, xss, xss, 0.0, fargs...), xss)
     B = ForwardDiff.jacobian(t -> equations(xss, t, xss, 0.0, fargs...), xss)
     C = ForwardDiff.jacobian(t -> equations(xss, xss, t, 0.0, fargs...), xss)
+    E = ForwardDiff.jacobian(t -> equations(xss, xss, xss, t, fargs...), shocks_ss)
 
-    return A, B, C
+    return A, B, C, E
 
 end
 
 
-function solve_system(A, B, C, maxiter=1000, tol=1e-6)
+function solve_system(A, B, C, E, maxiter=1000, tol=1e-6)
     
     #==
     Solves for P and Q using Rehndal's Algorithm
@@ -99,37 +86,67 @@ function solve_system(A, B, C, maxiter=1000, tol=1e-6)
         outmessage = "Convergence Successful!"
     end
     
+    Q = -(C * F + B) \ E
+
     println(outmessage)
 
-    return F0, A, B, C, outmessage
+    return F0, Q, A, B, C, outmessage
 
     
 end
 
 
-function compute_irfs(equations, F, B, C, shocks, xss, fargs, timeperiods = 40)
 
-    shocks_ss = [zero(shocks)]
-    E = ForwardDiff.jacobian(t -> equations(xss, xss, xss, shocks * t, fargs...), shocks_ss)
-    Q = -(C * F + B) \ E
 
-    IRF = zeros(size(F, 1), timeperiods)
+function solve(equations, fargs; xinit)
 
-    IRF[:, 1] = Q
-    for t in 2:timeperiods
-        IRF[:, t] = F * IRF[:, t-1]
-    end
 
-    IRF = IRF .+ xss
+    xss = get_ss(equations, xinit, fargs)
+    A, B, C, E = rendahl_coeffs(equations, xss, shocks_ss, fargs)
+    F, Q, A, B, C, outmessage = solve_system(A, B, C, E)
 
-    return IRF, Q, E
+    out = solution(outmessage, F, Q, xss, A, B, C, E)
+
+    return out
+    
+end 
+
+function simulate(sol::solution, timeperiods::Int64)
+
+    F = sol.F
+    Q = sol.Q
+    G = Matrix(I, size(F, 1), size(F, 1))
+
+    lss = LSS(F, Q, G)
+
+    X_simul, _ = simulate(lss, timeperiods)
+
+    return X_simul
 
 end
 
 
 
-function draw_irf(irf, xss, varnames)
+function compute_irfs(sol::solution; timeperiods = 40)
 
+    IRF = zeros(size(sol.F, 1), timeperiods)
+
+    IRF[:, 1] = sol.Q
+    for t in 2:timeperiods
+        IRF[:, t] = sol.F * IRF[:, t-1]
+    end
+
+    IRF = IRF .+ sol.xss
+
+    return IRF
+
+end
+
+
+
+function draw_irf(irf, sol::solution, varnames)
+
+    xss = sol.xss
     @assert length(varnames) == size(irf)[1]
     n = length(varnames)
     timeperiods = size(irf)[2]
@@ -144,23 +161,3 @@ function draw_irf(irf, xss, varnames)
     plot(plotlist..., legend = false, titlefont = font(10, "Arial"))
 
 end
-
-
-function solve(equations, fargs, shocks; xinit, irf_timeperiods = 0)
-
-
-    xss = get_ss(equations, xinit, fargs)
-    A, B, C = rendahl_coeffs(equations, xss, fargs)
-    F, A, B, C, outmessage = solve_system(A, B, C)
-    
-    if irf_timeperiods > zero(irf_timeperiods)
-        irf, Q, E = compute_irfs(equations, F, B, C, shocks, xss, fargs, irf_timeperiods)
-    else
-        irf, Q, E = [missing, missing, missing]
-    end
-
-    out = solution(outmessage, F, Q, irf, xss, A, B, C, E)
-
-    return out
-    
-end 
