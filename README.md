@@ -88,7 +88,5 @@ irf = compute_irfs(sol, 100)
 plot(irf', layout = 5, title = ["Consumption", "Interest Rate", "Capital", "Output", "Z"], labels = "")
 ```
 
-The output will look like this:
-
 ![RBC IRF](https://user-images.githubusercontent.com/32820850/118377767-f8710d80-b5ec-11eb-9b54-4d96ba17f65b.png)
 
