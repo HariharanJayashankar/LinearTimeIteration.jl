@@ -81,6 +81,9 @@ sim = simdata(sol, 200)
 plot(sim', layout = 5, title = ["Consumption", "Interest Rate", "Capital", "Output", "Z"])
 ```
 
+![Simulation](https://user-images.githubusercontent.com/32820850/123622733-3b4c1500-d82a-11eb-929f-ac445f1b460c.png)
+
+
 Similarly if you want to look at how the IRF's look:
 
 ```julia
@@ -88,5 +91,5 @@ irf = compute_irfs(sol, 100)
 plot(irf', layout = 5, title = ["Consumption", "Interest Rate", "Capital", "Output", "Z"], labels = "")
 ```
 
-![RBC IRF](https://user-images.githubusercontent.com/32820850/118377767-f8710d80-b5ec-11eb-9b54-4d96ba17f65b.png)
+![IRF](https://user-images.githubusercontent.com/32820850/123622746-3e470580-d82a-11eb-8a7e-0b678b2ee097.png)
 
