@@ -13,7 +13,7 @@ Package was built because it seemed like there was no quick way of playing aroun
 
 Using the package is simple. All you need to do is define a function `equations(Xl, X, Xf, ϵ, ϵ_sd ...)` which outputs the residuals of the equiblibrium equations of the model. `Xf` are supposed to be the one period forward variables, `X` the current variables, and `Xl` the lagged variables. `ϵ` should contain all the shocks of the model.
 
-`ϵ_sd` contains the standard deviations to all the shocks. This value is a bit important as it determines what the final solution will look like. By default this is 1.
+`ϵ_sd` contains the standard deviations to all the shocks. This value is a bit important as it determines what the final solution will look like. By default this is 1. (*A problem here at the moment is that the default is always a scalar of 1 instead of having a vector which scales with the input type*)
 
 `args` are optional arguments you may want to pass in like parameters the model needs.
 
