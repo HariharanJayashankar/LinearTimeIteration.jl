@@ -106,7 +106,7 @@ end
 
 
 
-function solve(equations, fargs, shocks_sd; xinit)
+function solve(equations, fargs, xinit; shocks_sd = 1.0)
 
     xss = get_ss(equations, xinit, shocks_sd, fargs)
     A, B, C, E = rendahl_coeffs(equations, xss, shocks_sd, fargs)

@@ -13,7 +13,7 @@ Package was built because it seemed like there was no quick way of playing aroun
 
 Using the package is simple. All you need to do is define a function `equations(Xl, X, Xf, ϵ, ϵ_sd ...)` which outputs the residuals of the equiblibrium equations of the model. `Xf` are supposed to be the one period forward variables, `X` the current variables, and `Xl` the lagged variables. `ϵ` should contain all the shocks of the model.
 
-`ϵ_sd` contains the standard deviations to all the shocks. This value is a bit important as it determines what the final solution will look like.
+`ϵ_sd` contains the standard deviations to all the shocks. This value is a bit important as it determines what the final solution will look like. By default this is 1.
 
 `args` are optional arguments you may want to pass in like parameters the model needs.
 
@@ -68,8 +68,7 @@ But how you wish to pass in the parameters is totally up to you!
 Solving the model is straightforward. We use the `solve` function to get out a `Solution` object with the fields `(resultmessage, F, Q, xss, equations, A, B, C, E)`. `F` and `Q` define the solution to the system. `xss` are the steady state values of the variables. `equations` stores the function which outputs the residual of the equilibrium equations. `A, B, C, E` correspond to their namesakes in the paper.
 
 ```julia
-shocks_sd = 0.8
-sol = solve(equations, [params], shocks_sd, xinit = ones(5))
+sol = solve(equations, [params], ones(5))
 ```
 
 `sol` has everything we need to understand our model.
