@@ -1,4 +1,4 @@
-# A DSGE Solver using Rendahl (2017)
+# Linear Time Iteration (2017)
 
 
 The package uses the Linear Time Iteration method from [Rendahl (2017)](https://www.ihs.ac.at/publications/eco/es-330.pdf) for solving linear rational expectation models like those typically found in DSGE models.
