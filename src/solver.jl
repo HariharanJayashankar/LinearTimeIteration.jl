@@ -12,6 +12,7 @@ struct solution
     xss::Vector{Float64}
 
     equations
+
     A::Matrix{Float64} 
     B::Matrix{Float64}
     C::Matrix{Float64}

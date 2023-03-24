@@ -6,7 +6,7 @@ The package uses the Linear Time Iteration method from [Rendahl (2017)](https://
 To install simply open your Julia terminal, go to the package manager by inputting `]` and then copying in:
 
 ```
-add https://github.com/HariharanJayashankar/Rendahl.jl
+add https://github.com/HariharanJayashankar/LinearTimeIteration.jl
 ```
 
 Package was built because it seemed like there was no quick way of playing around with big macro models.
