@@ -1,4 +1,4 @@
-module rendahl
+module lti
 
 using Plots: _show_pdfbackends
 include("solver.jl")
