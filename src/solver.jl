@@ -4,6 +4,7 @@ using ForwardDiff
 using LinearAlgebra
 using Plots
 using QuantEcon
+using LinearSolve
 
 struct solution
     resultmessage::String
@@ -22,6 +23,8 @@ end
 # useful helper functions
 atleast_2d(a) = fill(a,1,1)
 atleast_2d(a::AbstractArray) = ndims(a) == 1 ? reshape(a, :, 1) : a
+
+isinvertible(A) = !isapprox(det(A), 0, atol=1e-10)
 
 
 function ss_residual(x, equations, ϵ_sd, fargs)
@@ -42,7 +45,7 @@ function get_ss(equations, xss_init, ϵ_sd, fargs)
 end
 
 
-function rendahl_coeffs(equations, xss, shocks_sd, fargs)
+function linear_coeffs(equations, xss, shocks_sd, fargs)
 
     shocks_sd = atleast_2d(shocks_sd)
     shocks_ss = zero(shocks_sd)
@@ -57,7 +60,7 @@ function rendahl_coeffs(equations, xss, shocks_sd, fargs)
 end
 
 
-function solve_system(A, B, C, E, maxiter=1000, tol=1e-6)
+function solve_system(A, B, C, E, maxiter=1000, tol=1e-6; sing_solv=false)
     
     #==
     Solves for P and Q using Rehndal's Algorithm
@@ -68,9 +71,29 @@ function solve_system(A, B, C, E, maxiter=1000, tol=1e-6)
     error = one(tol) + tol
     iter = 0
     
+    if sing_solv
+        # pretty memory inefficient!
+        μ=0.01
+        M = I*μ
+        Chat = C
+        Bhat = B + 2.0*Chat*M
+        Ahat = C*M^2 + B*M + A
+        A = Ahat
+        B = Bhat
+        C = Chat
+    end
+
+
     while error > tol && iter <= maxiter
         
+        # using Linear solve for speed
+        # probF = LinearProblem(-(C * F0 + B), A)
+        # F1 = LinearSolve.solve(probF)
         F1 = -(C * F0 + B) \ A
+
+        # probS = LinearProblem(-(C * F0 + B), A)
+        # S1 = LinearSolve.solve(probS)
+
         S1 = -(A * S0 + B) \ C
         
         error = maximum(C * F1 * F1  + B * F1 + A)
@@ -95,7 +118,12 @@ function solve_system(A, B, C, E, maxiter=1000, tol=1e-6)
         outmessage = "Convergence Successful!"
     end
     
-    Q = -(C * F0 + B) \ E
+    if sing_solv
+        F0 = F0 + I
+        Q = -(C * F0 + B) \ E
+    else
+        Q = -(C * F0 + B) \ E
+    end
 
     println(outmessage)
 
@@ -110,8 +138,15 @@ end
 function solve(equations, fargs, xinit; shocks_sd = 1.0)
 
     xss = get_ss(equations, xinit, shocks_sd, fargs)
-    A, B, C, E = rendahl_coeffs(equations, xss, shocks_sd, fargs)
-    F0, Q, outmessage = solve_system(A, B, C, E)
+    A, B, C, E = linear_coeffs(equations, xss, shocks_sd, fargs)
+
+    if isinvertible(A) && isinvertible(C)
+        F0, Q, outmessage = solve_system(A, B, C, E)
+    else
+        println("Either the A or C matrix isnt invertible, trying method with singular solvents")
+        # else try method for singular solvent
+        F0, Q, outmessage = solve_system(A, B, C, E; sing_solv=true)
+    end
 
     out = solution(outmessage, F0, Q, xss, equations, A, B, C, E)
 
